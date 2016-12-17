@@ -35,3 +35,7 @@ def about():
         year=datetime.now().year,
         message='Your application description page.'
     )
+
+@app.route('/add')
+def add():
+    return str(int(request.args.get('a', 0)) + int(request.args.get('b', 0)))
