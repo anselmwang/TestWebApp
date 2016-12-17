@@ -5,6 +5,7 @@ Routes and views for the flask application.
 from datetime import datetime
 from flask import render_template
 from FlaskWebProject1 import app
+from flask import request
 
 @app.route('/')
 @app.route('/home')
@@ -38,4 +39,4 @@ def about():
 
 @app.route('/add')
 def add():
-    return str(int(request.args.get('a', 0)) + int(request.args.get('b', 0)))
+    return str(int(request.args.get('a', '0')) +int(request.args.get('b', '0')))
