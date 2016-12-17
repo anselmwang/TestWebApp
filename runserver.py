@@ -1,9 +1,9 @@
 """
-This script runs the FlaskWebProject2 application using a development server.
+This script runs the FlaskWebProject1 application using a development server.
 """
 
 from os import environ
-from FlaskWebProject2 import app
+from FlaskWebProject1 import app
 
 if __name__ == '__main__':
     HOST = environ.get('SERVER_HOST', 'localhost')
