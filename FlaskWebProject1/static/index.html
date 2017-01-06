@@ -1,0 +1,60 @@
+<html>
+<head>
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+	<script src="https://unpkg.com/vue/dist/vue.js"></script>
+</head>
+<body>
+	<div class="jumbotron text-center">
+	  <h1>Adder</h1>
+	  <p>By YW</p> 
+	</div>
+	<div class="container" id="app">
+		<div class="col-sm-12">
+
+			<form>
+				<div class="form-group">
+					<label for="a">1st Number:</label>
+					<input type="text" class="form-control" name="a" v-model="a"></input>
+				</div>
+				<div class="form-group">
+					<label for="b">2nd Number:</label>
+					<input type="text" class="form-control" name="b" v-model="b"></input>
+				</div>
+
+				<button type="button" v-on:click="Add">Add</button>
+			</form>
+			<div class="well">{{result}}</div>
+		</div>
+	</div>
+	<script>
+		vm = new Vue({
+			el : "#app",
+			data : {
+				a : 0,
+				b : 0,
+				result : 0,
+			},
+			methods : {
+				Add : function()
+				{
+					//this.result = parseInt(this.a) + parseInt(this.b);
+					dataRoot = this;
+					$.get("add",
+						{a : this.a, b : this.b},
+						function(data, status){
+							dataRoot.result = data;
+						});
+					
+				}
+			}
+
+		})
+	</script>
+</body>
+</html>
