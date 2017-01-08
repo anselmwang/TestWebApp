@@ -1,0 +1,175 @@
+<html>
+<head>
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+	<script src="https://unpkg.com/vue/dist/vue.js"></script>
+	<script src="https://d3js.org/d3.v4.min.js"></script>
+</head>
+<body>
+	<div class="jumbotron text-center">
+	  <h1>Digit Recognizer</h1>
+	  <p>By YW</p> 
+	</div>
+	<div class="container" id="app">
+		<div class="col-sm-6">
+			<div id="drawPad"></div>
+		</div>
+		<div class="col-sm-6">
+			<table class="table table-striped">
+				<thead>
+			      <tr>
+			        <th>Class Name</th>
+			        <th>Prob</th>
+			      </tr>
+			    </thead>
+			    <tbody id="softmaxOutput">
+			    	<tr v-for="classProbTuple in softmaxOutput">
+			    		<td>{{classProbTuple.className}}</td>
+			    		<td>{{classProbTuple.prob}}</td>
+			    	</tr>
+			    </tbody>
+			</table>
+		</div>
+	</div>
+	<script>
+		function ClassProbTuple(className, prob)
+		{
+			this.className = className;
+			this.prob = prob;
+		}
+
+		var softmaxOutput = [];
+		var unnormalizedProbSum = 0;
+		for(var i=0; i<10; i++)
+		{
+			unnormalizedProb = Math.random()
+			unnormalizedProbSum += unnormalizedProb;
+			softmaxOutput.push(new ClassProbTuple(i, unnormalizedProb));
+
+		}
+		for(var i=0; i<10; i++)
+		{
+			softmaxOutput[i].prob /= unnormalizedProbSum;
+		}
+
+		softmaxOutput.sort(function(d0, d1) {return d1.prob - d0.prob;})
+
+		var vm = new Vue({
+			el : "#app",
+			data : {
+				softmaxOutput : softmaxOutput
+			}
+		});
+
+
+
+	</script>
+
+	<script>
+	function drawPadData() {
+		var data = new Array();
+		var xpos = 1; //starting xpos and ypos at 1 so the stroke will show when we make the grid below
+		var ypos = 1;
+		var width = 10;
+		var height = 10;
+		var click = 0;
+		
+		// iterate for rows	
+		for (var row = 0; row < 28; row++) {
+			data.push( new Array() );
+			
+			// iterate for cells/columns inside rows
+			for (var column = 0; column < 28; column++) {
+				data[row].push({
+					x: xpos,
+					y: ypos,
+					width: width,
+					height: height,
+					click: click
+				})
+				// increment the x position. I.e. move it over by 10 (width variable)
+				xpos += width;
+			}
+			// reset the x position after a row is complete
+			xpos = 1;
+			// increment the y position for the next row. Move it down 10 (height variable)
+			ypos += height;	
+		}
+		return data;
+	}
+
+	var drawPadData = drawPadData();
+	var isMouseDown = false;
+
+	var drawPad = d3.select("#drawPad")
+		.append("svg")
+		.attr("width","290px")
+		.attr("height","290px")
+		.attr("class", "center-block");
+		
+	var bigrow = drawPad.selectAll(".row")
+		.data(drawPadData)
+		.enter().append("g")
+		.attr("class", "row");
+		
+	var bigcolumn = bigrow.selectAll(".square")
+		.data(function(d) { return d; })
+		.enter().append("rect")
+		.attr("class","square")
+		.attr("x", function(d) { return d.x; })
+		.attr("y", function(d) { return d.y; })
+		.attr("width", function(d) { return d.width; })
+		.attr("height", function(d) { return d.height; })
+		.style("fill", "#fff")
+		.style("stroke", "#222")
+		.on('mouseover', function(d) {
+		   if(isMouseDown)
+		   {
+   				d.click = 1;
+	       		d3.select(this).style("fill","#000000"); 
+		   }
+	       
+	    })
+	    .on('mousedown', function(d)
+    	{
+			isMouseDown=true;
+    	})
+    	.on('mouseup', function(d)
+    	{
+			isMouseDown=false;
+			sample  = [];
+			for(var rowNo = 0; rowNo < drawPadData.length; rowNo++)
+			{
+				for(var colNo = 0; colNo < drawPadData[rowNo].length; colNo++)
+				{
+					sample.push(drawPadData[rowNo][colNo].click);
+				}
+			}
+			console.log(sample);
+			$.ajax({
+			  url:"digitrec_predict",
+			  type:"POST",
+			  data: JSON.stringify(sample),
+			  contentType:"application/json; charset=utf-8",
+			  dataType:"json",
+			  success: function(data){
+			    console.log(data);
+			    for(var i=0; i<10; i++)
+				{
+					softmaxOutput[i].prob = data.result[i];
+				}
+				softmaxOutput.sort(function(d0, d1) {return d1.prob - d0.prob;})
+			    vm.softmaxOutput = softmaxOutput;
+
+			  }
+			});
+    	});
+
+	</script>
+</body>
+</html>
