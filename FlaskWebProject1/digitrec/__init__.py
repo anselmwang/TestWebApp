@@ -15,6 +15,7 @@ import sys
 import os
 import os.path
 
+
 def GetProgPath():
     return os.path.dirname(__main__.__file__)
     
@@ -34,4 +35,7 @@ def Predict(sample):
     scoreList = [unnormScore/sumScore for unnormScore in scoreList]
     return scoreList
 
+
+
+    
 

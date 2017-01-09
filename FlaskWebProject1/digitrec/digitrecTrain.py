@@ -31,7 +31,7 @@ testData = testData > 100
 
 #Imp.plt.hist(trainData.reshape((50000*784,)))
 
-clf = Imp.sk.linear_model.LogisticRegression(tol=0.1)
+clf = Imp.sk.linear_model.LogisticRegression(tol=0.1, C=0.01)
 clf.fit(trainData, trainTarget)
 
 print("accuracy: %s" % Imp.sk.metrics.accuracy_score(testTarget, clf.predict(testData)))
@@ -64,3 +64,19 @@ print("accuracy: %s" % Imp.sk.metrics.accuracy_score(testTarget, pred))
 with open(r"model.py", "w") as outF:
     outF.write("classCoefs = %s\n" % repr(classCoefs))
     outF.write("classBiases = %s\n" % repr(classBiases))
+
+
+def NearestFig(pixels):
+    a = Imp.np.array(pixels)
+    Imp.plt.imshow(a.reshape((28,28)))
+    
+    sim = trainData.dot(a)
+    
+    sortResult = Imp.np.argsort(sim)
+    
+    for i in reversed(list(sortResult[-5:])):
+        print(sim[i])
+        Imp.plt.figure()
+        Imp.plt.imshow(trainData[i].reshape((28,28)))
+        
+

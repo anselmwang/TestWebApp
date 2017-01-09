@@ -1,0 +1,100 @@
+<html>
+<head>
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+	<script src="https://unpkg.com/vue/dist/vue.js"></script>
+	<script src="https://d3js.org/d3.v4.min.js"></script>
+	<script src="/static/ywlib.js"></script>
+</head>
+<body>
+	<div class="jumbotron text-center">
+	  <h1>Digit Recognizer</h1>
+	  <p>By YW</p> 
+	</div>
+	<div class="container" id="app">
+		<div class="col-sm-6">
+			<div id="drawPad"></div>
+		</div>
+		<div class="col-sm-6">
+			<table class="table table-striped">
+				<thead>
+			      <tr>
+			        <th>Class Name</th>
+			        <th>Prob</th>
+			      </tr>
+			    </thead>
+			    <tbody id="softmaxOutput">
+			    	<tr v-for="classProbTuple in softmaxOutput">
+			    		<td>{{classProbTuple.className}}</td>
+			    		<td>{{classProbTuple.prob}}</td>
+			    	</tr>
+			    </tbody>
+			</table>
+		</div>
+	</div>
+
+	<script>
+
+	var softMaxOutput = new SoftMaxOutput();		
+
+	var vm = new Vue({
+		el : "#app",
+		data : {
+			softmaxOutput : softMaxOutput.Get()
+		}
+	});
+
+	var mouseOverFunc = function(d) 
+	{
+	   if(drawPad.isMouseDown)
+	   {
+			d.click = 1;
+       		d3.select(this).style("fill","#000000"); 
+	   }
+       
+    }
+
+    var mouseDownFunc = function(d)
+	{
+		drawPad.isMouseDown=true;
+	}
+
+	var mouseUpFunc = function(d)
+	{
+		drawPad.isMouseDown=false;
+		var sample = drawPad.ToJson();
+		console.log(sample);
+		$.ajax({
+		  url:"/digitrec/predict",
+		  type:"POST",
+		  data: JSON.stringify(sample),
+		  contentType:"application/json; charset=utf-8",
+		  dataType:"json",
+		  success: function(data){
+		    console.log(data);
+		    var softMaxOutput = new SoftMaxOutput();
+		    softMaxOutput.Init(data.result);
+		    vm.softmaxOutput = softMaxOutput.Get();
+
+		  }
+		});
+	}
+
+	var drawPad = new DrawPad(10, 10, 28, 28);
+	drawPad.Bind("#drawPad", mouseOverFunc, mouseDownFunc, mouseUpFunc);
+
+
+	</script>
+
+	<script>
+
+	
+
+	</script>
+</body>
+</html>
