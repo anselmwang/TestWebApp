@@ -18,7 +18,7 @@ def send_static(filename):
     return flask.send_file(flask.safe_join("static", filename))
 
 
-@app.route('/add')
+@app.route('/add/add')
 def add():
     return str(int(request.args.get('a', '0')) +int(request.args.get('b', '0')))
 
