@@ -1,0 +1,123 @@
+<html>
+<head>
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+	<script src="https://unpkg.com/vue/dist/vue.js"></script>
+	<script src="https://d3js.org/d3.v4.min.js"></script>
+	<script src="/static/ywlib.js"></script>
+</head>
+<body>
+	<div class="jumbotron text-center">
+	  <h1>Digit Recognition Labeller</h1>
+	  <p>By YW</p> 
+	</div>
+	<div class="container" id="app">
+
+		<div class="container">
+			<div class="col-sm-6">
+			</div>
+			<div class="col-sm-6">
+				<form>
+				  <button type="button" class="btn btn-success" @click="Submit">Submit</button>
+				  <button type="button" class="btn btn-default" @click="Clear">Clear</button>
+				</form>			
+			</div>
+		</div>
+
+		<div class="container">
+			<div class="col-sm-6">
+				<div style="font-size:280px;text-align:center;border:1px solid black;" >{{target}}</div>
+			</div>
+
+			<div class="col-sm-6">
+				<div>
+					<svg id="drawPad"></svg>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+
+	var mouseOverFunc = function(d) 
+	{
+	   if(drawPad.isMouseDown)
+	   {
+			d.click = 1;
+       		d3.select(this).style("fill","#000000"); 
+	   }
+       
+    }
+
+    var mouseDownFunc = function(d)
+	{
+		drawPad.isMouseDown=true;
+	}
+
+	var mouseUpFunc = function(d)
+	{
+		drawPad.isMouseDown=false;
+		var sample = drawPad.ToJson();
+		console.log(sample);
+
+	}
+
+	function Rand()
+	{
+		var target = Math.floor(Math.random() * 10);
+		vm.target = target;
+	}
+
+	function Clear()
+	{
+		console.log("clear");
+		drawPad.Clear();
+	}
+
+	var vm = new Vue({
+		el : "#app",
+		data : {
+			target: 0,
+		},
+		methods : {
+			Submit : function()
+			{
+				console.log("submit");
+				var sample = drawPad.ToJson();
+				$.ajax({
+				  url:"/digitrec/saveInst",
+				  type:"POST",
+				  data: JSON.stringify({
+					  	target: this.target,
+					  	sample: sample
+				  	}),
+				  contentType:"application/json; charset=utf-8",
+				  dataType:"json",
+				  success: function(data){
+				  	Clear();
+				  	Rand();
+				  }
+				});
+
+			}, 
+			Clear : Clear,
+		}
+	});
+
+	var drawPad = new DrawPad(10, 10, 28, 28);
+	drawPad.Bind("#drawPad", mouseOverFunc, mouseDownFunc, mouseUpFunc);
+
+	
+
+	Rand();
+
+
+	</script>
+
+</body>
+</html>

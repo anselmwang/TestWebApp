@@ -16,13 +16,15 @@ import os
 import os.path
 
 
-def GetProgPath():
-    return os.path.dirname(__main__.__file__)
-    
-sys.path.append(os.path.split(os.path.realpath(__file__))[0])
 
 
-from model import *
+
+
+def GetDir():
+    return os.path.split(os.path.realpath(__file__))[0]
+
+sys.path.append(GetDir())
+from model import *    
 
 def Predict(sample):
     scoreList = []

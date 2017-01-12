@@ -13,32 +13,6 @@ from __future__ import unicode_literals
 import Imp
 
 
-
-#digits = Imp.sk.datasets.load_digits()
-#
-#data = digits.images.reshape((digits.images.shape[0], -1))
-#data = data > 8
-#target = digits.target
-#trainData = data[：1700]
-#trainTarget = target[:1700]
-#testData = data[1700:]
-#testTarget = target[1700:]
-
-mnist = Imp.sk.datasets.fetch_mldata('MNIST original', data_home=r"d:\temp\skdata")
-trainData, testData, trainTarget, testTarget = Imp.sk.cross_validation.train_test_split(mnist.data, mnist.target, test_size=0.1, random_state=1)
-trainData = trainData > 100
-testData = testData > 100
-
-#Imp.plt.hist(trainData.reshape((50000*784,)))
-
-clf = Imp.sk.linear_model.LogisticRegression(tol=0.1, C=0.01)
-clf.fit(trainData, trainTarget)
-
-print("accuracy: %s" % Imp.sk.metrics.accuracy_score(testTarget, clf.predict(testData)))
-
-classCoefs = [list(classCoef) for classCoef in clf.coef_]
-classBiases = list(clf.intercept_)
-
 import math
 def Predict(classCoefs, classBiases, sample):
     scoreList = []
@@ -50,13 +24,36 @@ def Predict(classCoefs, classBiases, sample):
     sumScore = sum(scoreList)
     scoreList = [unnormScore/sumScore for unnormScore in scoreList]
     return scoreList
+    
+def KNN(pixels, n=5, verbose=False):
+    a = Imp.np.array(pixels)
+    sim = trainData.dot(a)
+    sortResult = Imp.np.argsort(sim)
+    
+    if verbose:
+        Imp.plt.imshow(a.reshape((28,28)))
+        for i in reversed(list(sortResult[-n:])):
+            print(sim[i], trainTarget[i])
+            Imp.plt.figure()
+            Imp.plt.imshow(trainData[i].reshape((28,28)))
+    
+    return int(Imp.sp.stats.mode([trainTarget[i] for i in reversed(list(sortResult[-n:]))])[0][0])
 
 
-#print(Predict(classCoefs, classBiases, data[1]))
-#print(clf.predict_proba(data[1]))
+mnist = Imp.sk.datasets.fetch_mldata('MNIST original', data_home=r"d:\temp\skdata")
+trainData, testData, trainTarget, testTarget = Imp.sk.cross_validation.train_test_split(mnist.data, mnist.target, test_size=0.1, random_state=1)
+trainData = trainData > 200
+testData = testData > 200
 
-#print(repr(classCoefs))
-#print(repr(classBiases))
+#Imp.plt.hist(trainData.reshape((50000*784,)))
+
+clf = Imp.sk.linear_model.LogisticRegression(tol=0.1, C=0.01)
+clf.fit(trainData, trainTarget)
+print("accuracy: %s" % Imp.sk.metrics.accuracy_score(testTarget, clf.predict(testData)))
+
+classCoefs = [list(classCoef) for classCoef in clf.coef_]
+classBiases = list(clf.intercept_)
+
 pred = [Imp.np.argmax(Predict(classCoefs, classBiases, row)) for row in testData]
 print("accuracy: %s" % Imp.sk.metrics.accuracy_score(testTarget, pred))
 # accuracy: 0.8715
@@ -65,18 +62,42 @@ with open(r"model.py", "w") as outF:
     outF.write("classCoefs = %s\n" % repr(classCoefs))
     outF.write("classBiases = %s\n" % repr(classBiases))
 
+    
+            
 
-def NearestFig(pixels):
-    a = Imp.np.array(pixels)
-    Imp.plt.imshow(a.reshape((28,28)))
+idealTarget = []
+lrPred = []
+knn5Pred = []
+knn1Pred = []
+images = []
+for no, line in enumerate(open(r"d:\temp\TestWebApp\FlaskWebProject1\digitrec\data.tsv")):
+    target, image = line.split("\t")
+    image = eval(image)
+    target = int(target)
+    #Imp.plt.figure()
+    #Imp.plt.imshow(Imp.np.array(image).reshape((28,28)))
     
-    sim = trainData.dot(a)
+    idealTarget.append(target)
     
-    sortResult = Imp.np.argsort(sim)
-    
-    for i in reversed(list(sortResult[-5:])):
-        print(sim[i])
-        Imp.plt.figure()
-        Imp.plt.imshow(trainData[i].reshape((28,28)))
+    lrPred0 = Imp.np.argmax(Predict(classCoefs, classBiases, image))
+    knn5Pred0 = KNN(image, n=5, verbose=False)
+    knn1Pred0 = KNN(image, n=1)
+    lrPred.append(lrPred0)
+    knn5Pred.append(knn5Pred0)
+    knn1Pred.append(knn1Pred0)
+    images.append(image)
+
+
+print("n: %s" % (no+1))
+print("LR accuracy: %s" % Imp.sk.metrics.accuracy_score(idealTarget, lrPred))   
+print("KNN5 accuracy: %s" % Imp.sk.metrics.accuracy_score(idealTarget, knn5Pred))   
+print("KNN1 accuracy: %s" % Imp.sk.metrics.accuracy_score(idealTarget, knn1Pred))   
+
+lrWrongIndices = []
+for no, (lrPred0, knn5Pred0, knn1Pred0, idealTarget0) in enumerate(zip(lrPred, knn5Pred, knn1Pred, idealTarget)):
+    if lrPred0 != idealTarget0:
+        lrWrongIndices.append(no)
         
-
+idx = lrWrongIndices[5]
+print(idealTarget[idx], lrPred[idx], knn5Pred[idx])
+KNN(images[idx], n=5, verbose=True)
