@@ -8,8 +8,14 @@
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 	<script src="https://unpkg.com/vue/dist/vue.js"></script>
-	<script src="https://d3js.org/d3.v4.min.js"></script>
+	<!--<script src="https://d3js.org/d3.v4.min.js"></script>-->
 	<script src="/static/ywlib.js"></script>
+
+	<!-- below 2 files are copied from the mpld3.show()'s result html. mpld3 is not compatiable with all version of d3
+	     But I guess after update d3.js also to latest, the problem may be solved -->
+	<script src="/static/d3.js"></script>
+	<script src="/static/mpld3.js"></script>
+
 </head>
 <body>
 	<div class="jumbotron text-center">
@@ -17,10 +23,13 @@
 	  <p>By YW</p> 
 	</div>
 	<div class="container" id="app">
-		<div class="col-sm-6">
+		<div class="col-sm-12">
 			<div>
 				<svg id="drawPad" class="center-block"></svg>
 			</div>
+		</div>
+		<div class="col-sm-6">
+			<div id="softmaxOutputFig" width="480px" height="240px"></div>
 		</div>
 		<div class="col-sm-6">
 			<table class="table table-striped">
@@ -79,6 +88,11 @@
 		  dataType:"json",
 		  success: function(data){
 		    console.log(data);
+
+		    figData = JSON.parse(data.figData);
+		    $("#softmaxOutputFig").html("");
+		    mpld3.draw_figure("softmaxOutputFig", figData);
+		    
 		    var softMaxOutput = new SoftMaxOutput();
 		    softMaxOutput.Init(data.result);
 		    vm.softmaxOutput = softMaxOutput.Get();

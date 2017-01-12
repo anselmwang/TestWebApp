@@ -8,6 +8,7 @@ from flask import jsonify
 import flask
 import os
 import os.path
+import Imp
 
 
 @app.route("/app/<path:filename>")
@@ -29,7 +30,15 @@ import digitrec
 @app.route('/digitrec/predict', methods=['GET', 'POST'])
 def digitrec_predict():
     sample = request.get_json()
-    return jsonify({"result": digitrec.Predict(sample)})
+    result = digitrec.Predict(sample)
+    
+    fig = Imp.plt.figure(figsize=(6,4))
+    df = Imp.pd.DataFrame({"class" : Imp.np.arange(10), "prob" : result})
+    ax = Imp.sns.barplot(x="class", y="prob", data=df)    
+    
+    figData = Imp.mpld3.fig_to_dict(fig)
+   
+    return jsonify({"result": result, "figData": Imp.simplejson.dumps(figData, ignore_nan=True)})
     
 @app.route('/digitrec/saveInst', methods=['GET', 'POST'])
 def digitrec_saveInst():
