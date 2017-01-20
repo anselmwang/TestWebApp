@@ -10,6 +10,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from spyre import server
 import Imp
 
 
@@ -47,20 +48,20 @@ testData = testData > 200
 
 #Imp.plt.hist(trainData.reshape((50000*784,)))
 
-clf = Imp.sk.linear_model.LogisticRegression(tol=0.1, C=0.01)
+clf = Imp.sk.linear_model.LogisticRegression(tol=1., C=0.01)
 clf.fit(trainData, trainTarget)
 print("accuracy: %s" % Imp.sk.metrics.accuracy_score(testTarget, clf.predict(testData)))
 
 classCoefs = [list(classCoef) for classCoef in clf.coef_]
 classBiases = list(clf.intercept_)
 
-pred = [Imp.np.argmax(Predict(classCoefs, classBiases, row)) for row in testData]
-print("accuracy: %s" % Imp.sk.metrics.accuracy_score(testTarget, pred))
+#pred = [Imp.np.argmax(Predict(classCoefs, classBiases, row)) for row in testData]
+#print("accuracy: %s" % Imp.sk.metrics.accuracy_score(testTarget, pred))
 # accuracy: 0.8715
-
-with open(r"model.py", "w") as outF:
-    outF.write("classCoefs = %s\n" % repr(classCoefs))
-    outF.write("classBiases = %s\n" % repr(classBiases))
+#
+#with open(r"model.py", "w") as outF:
+#    outF.write("classCoefs = %s\n" % repr(classCoefs))
+#    outF.write("classBiases = %s\n" % repr(classBiases))
 
     
             
@@ -97,7 +98,59 @@ lrWrongIndices = []
 for no, (lrPred0, knn5Pred0, knn1Pred0, idealTarget0) in enumerate(zip(lrPred, knn5Pred, knn1Pred, idealTarget)):
     if lrPred0 != idealTarget0:
         lrWrongIndices.append(no)
+
+
+
+class UnderstandLRWrongPred(server.App):
+    title = "Understand LR Wrong Prediction"
+    inputs = [{ "type":"dropdown",
+               "label":"wrong prediction index",
+               "options" : [{"label": str(wrongIndex), "value": str(wrongIndex)} for wrongIndex in lrWrongIndices],
+               "key":"wrongIndex",
+                "action_id":"update_data"}]
+
+    controls = [{   "type" : "hidden",
+                    "id" : "update_data"}]
+
+    outputs = [{"type":"html",
+                 "id":"html",
+                 "control_id" : "update_data"
+                },
+                {"type":"plot",
+                 "id": "plot",
+                 "control_id" : "update_data"
+                }
+            ]
+
+    def getHTML(self, params):
+        idx = int(params["wrongIndex"])        
+        return "Label: %s, LR Pred: %s, KNN5 Pred: %s" % (idealTarget[idx], lrPred[idx], knn5Pred[idx])
         
-idx = lrWrongIndices[5]
-print(idealTarget[idx], lrPred[idx], knn5Pred[idx])
-KNN(images[idx], n=5, verbose=True)
+    def getPlot(self, params):
+        idx = int(params["wrongIndex"])        
+        
+        pixels = images[idx]
+        n = 5
+        
+        a = Imp.np.array(pixels)
+        sim = trainData.dot(a)
+        sortResult = Imp.np.argsort(sim)
+        
+        fig = Imp.plt.figure(figsize=(12,8))
+        Imp.plt.subplot(251)
+        
+        Imp.plt.imshow(a.reshape((28,28)))
+        Imp.plt.title("Original graph")
+        
+        for figNo, idx in enumerate(sortResult[-n:]):
+                Imp.plt.subplot(2, 5, figNo+6)
+                Imp.plt.imshow(trainData[idx].reshape((28,28)))
+                Imp.plt.title("label: %s" % trainTarget[idx])
+
+        
+        return fig
+
+app = UnderstandLRWrongPred()
+app.launch()
+
+
