@@ -26,7 +26,27 @@ def send_static(filename):
 def add():
     return str(int(request.args.get('a', '0')) +int(request.args.get('b', '0')))
 
-import digitrec
+def ConvertNpTypesInPlace(figData):
+    if isinstance(figData, dict):
+        for key in figData.keys():
+            value = figData[key]
+            if isinstance(value, Imp.np.generic):
+                value = Imp.np.asscalar(value)
+                figData[key] = value
+            else:
+                ConvertNpTypesInPlace(value)
+    elif isinstance(figData, list):
+        for no in range(len(figData)):
+            value = figData[no]
+            if isinstance(value, Imp.np.generic):
+                value = Imp.np.asscalar(value)
+                figData[no] = value
+            else:
+                ConvertNpTypesInPlace(value)
+            
+            
+
+import FlaskWebProject1.digitrec as digitrec
 @app.route('/digitrec/predict', methods=['GET', 'POST'])
 def digitrec_predict():
     sample = request.get_json()
@@ -37,7 +57,10 @@ def digitrec_predict():
     ax = Imp.sns.barplot(x="class", y="prob", data=df)    
     
     figData = Imp.mpld3.fig_to_dict(fig)
-   
+
+    ConvertNpTypesInPlace(figData)
+    raise Exception(type(figData))   
+    raise Exception(repr(figData))
     return jsonify({"result": result, "figData": Imp.simplejson.dumps(figData, ignore_nan=True)})
     
 @app.route('/digitrec/saveInst', methods=['GET', 'POST'])
